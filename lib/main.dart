@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:todo_list_mobile/screens/ListsPage.dart';
 import 'package:todo_list_mobile/screens/TasksPage.dart';
 
 void main() {
@@ -17,7 +18,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
-      home: const TasksPage(),
+      home: const ListsPage(),
     );
   }
 }
