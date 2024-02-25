@@ -1,11 +1,21 @@
 import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
 class TaskService {
-  final String baseUrl = 'http://localhost:3000';
+  // 'https://task-tracker-api.fly.dev'
+  final String baseUrl = 'https://task-tracker-api.fly.dev';
+  final FlutterSecureStorage _storage = FlutterSecureStorage();
 
   Future<List<dynamic>> getTasks(int listId) async {
-    var response = await http.get(Uri.parse('$baseUrl/lists/$listId/tasks'));
+    var token = await _storage.read(key: 'token');
+    var response = await http.get(
+      Uri.parse('$baseUrl/lists/$listId/tasks'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
@@ -14,9 +24,13 @@ class TaskService {
   }
 
   Future<dynamic> createTask(int listId, Map<String, dynamic> taskData) async {
+    var token = await _storage.read(key: 'token');
     var response = await http.post(
       Uri.parse('$baseUrl/lists/$listId/tasks'),
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
       body: json.encode(taskData),
     );
 
@@ -28,8 +42,12 @@ class TaskService {
   }
 
   Future<dynamic> getTask(int listId, int taskId) async {
-    var response =
-        await http.get(Uri.parse('$baseUrl/lists/$listId/tasks/$taskId'));
+    var token = await _storage.read(key: 'token');
+    var response = await http
+        .get(Uri.parse('$baseUrl/lists/$listId/tasks/$taskId'), headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    });
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
@@ -39,9 +57,13 @@ class TaskService {
 
   Future<dynamic> updateTask(
       int listId, int taskId, Map<String, dynamic> taskData) async {
+    var token = await _storage.read(key: 'token');
     var response = await http.patch(
       Uri.parse('$baseUrl/lists/$listId/tasks/$taskId'),
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
       body: json.encode(taskData),
     );
     if (response.statusCode == 200) {
@@ -52,17 +74,26 @@ class TaskService {
   }
 
   Future<void> deleteTask(int listId, int taskId) async {
-    var response =
-        await http.delete(Uri.parse('$baseUrl/lists/$listId/tasks/$taskId'));
+    var token = await _storage.read(key: 'token');
+    var response = await http
+        .delete(Uri.parse('$baseUrl/lists/$listId/tasks/$taskId'), headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    });
     if (response.statusCode != 200) {
       throw Exception('Failed to delete task');
     }
   }
 
   Future<dynamic> toggleTask(int listId, int taskId) async {
+    var token = await _storage.read(key: 'token');
+
     var response = await http.patch(
-      Uri.parse('$baseUrl/lists/$listId/tasks/$taskId/toggle'),
-    );
+        Uri.parse('$baseUrl/lists/$listId/tasks/$taskId/toggle'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        });
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {

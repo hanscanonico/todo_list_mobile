@@ -24,7 +24,7 @@ class _ListWidgetState extends State<ListWidget> {
           ),
           textAlign: TextAlign.left,
         ),
-        trailing: Icon(Icons.arrow_forward_ios),
+        trailing: Icon(Icons.arrow_forward_sharp),
         onTap: () {
           Navigator.of(context).push(
             MaterialPageRoute(
