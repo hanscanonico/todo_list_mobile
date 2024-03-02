@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:todo_list_mobile/functions.dart';
 
 const String baseUrl = 'https://task-tracker-api.fly.dev';
 const FlutterSecureStorage _storage = FlutterSecureStorage();
@@ -43,6 +44,22 @@ class UserService {
       await _storage.write(key: 'token', value: token);
     } else {
       throw Exception('Failed to sign in');
+    }
+  }
+
+  Future<void> signOut() async {
+    String? token = await getToken();
+    var response = await http.delete(
+      Uri.parse('$baseUrl/users/sign_out'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+    if (response.statusCode == 204) {
+      await _storage.delete(key: 'token');
+    } else {
+      throw Exception('Failed to sign out');
     }
   }
 }

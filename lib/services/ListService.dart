@@ -1,14 +1,13 @@
 import 'dart:convert';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:todo_list_mobile/functions.dart';
 
 class ListService {
   // 'https://task-tracker-api.fly.dev'
   final String baseUrl = 'https://task-tracker-api.fly.dev';
-  final FlutterSecureStorage _storage = FlutterSecureStorage();
 
   Future<List<dynamic>> getLists() async {
-    var token = await _storage.read(key: 'token');
+    String? token = await getToken();
     var response = await http.get(
       Uri.parse('$baseUrl/lists'),
       headers: {
@@ -25,7 +24,7 @@ class ListService {
   }
 
   Future<dynamic> createList(Map<String, dynamic> listData) async {
-    var token = await _storage.read(key: 'token');
+    String? token = await getToken();
     var response = await http.post(
       Uri.parse('$baseUrl/lists'),
       headers: {
@@ -42,7 +41,7 @@ class ListService {
   }
 
   Future<dynamic> getList(int listId) async {
-    var token = await _storage.read(key: 'token');
+    String? token = await getToken();
     var response = await http.get(
       Uri.parse('$baseUrl/lists/$listId'),
       headers: {
@@ -50,6 +49,8 @@ class ListService {
         'Authorization': 'Bearer $token',
       },
     );
+    print('response: ${response.body}');
+    print('token: $token');
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
@@ -58,7 +59,7 @@ class ListService {
   }
 
   Future<dynamic> updateList(int listId, Map<String, dynamic> listData) async {
-    var token = await _storage.read(key: 'token');
+    String? token = await getToken();
     var response = await http.patch(
       Uri.parse('$baseUrl/lists/$listId'),
       headers: {
@@ -75,7 +76,7 @@ class ListService {
   }
 
   Future<void> deleteList(int listId) async {
-    var token = await _storage.read(key: 'token');
+    String? token = await getToken();
     var response = await http.delete(
       Uri.parse('$baseUrl/lists/$listId'),
       headers: {

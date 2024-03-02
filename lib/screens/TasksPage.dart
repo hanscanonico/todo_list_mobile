@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:todo_list_mobile/screens/LoginPage.dart';
+import 'package:todo_list_mobile/services/UserService.dart';
 import 'package:todo_list_mobile/widgets/AddTaskWidget.dart';
 import 'package:todo_list_mobile/widgets/EditTaskWidget.dart';
 import 'package:todo_list_mobile/widgets/TaskWidget.dart';
@@ -76,6 +78,19 @@ class _TasksPageState extends State<TasksPage> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text('Tasks for ${widget.listName}'),
+        actions: <Widget>[
+          // Add this line
+          IconButton(
+            icon: Icon(Icons.exit_to_app),
+            onPressed: () {
+              UserService().signOut();
+              Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => LoginPage()));
+              print('Sign out');
+            },
+            tooltip: 'Sign Out',
+          ),
+        ],
       ),
       body: FutureBuilder<List<dynamic>>(
         future: tasksFuture,

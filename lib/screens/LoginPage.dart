@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:todo_list_mobile/functions.dart';
 import 'package:todo_list_mobile/screens/ListsPage.dart';
 import 'package:todo_list_mobile/services/UserService.dart';
 
@@ -48,7 +49,7 @@ class _LoginPageState extends State<LoginPage> {
                 await UserService()
                     .signIn(_emailController.text, _passwordController.text);
 
-                if (_storage.read(key: 'token') != null) {
+                if (getToken() != null) {
                   Navigator.of(context).pushReplacement(
                       MaterialPageRoute(builder: (context) => ListsPage()));
                 }

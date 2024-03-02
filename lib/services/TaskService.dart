@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:todo_list_mobile/functions.dart';
 
 class TaskService {
   // 'https://task-tracker-api.fly.dev'
@@ -8,7 +9,7 @@ class TaskService {
   final FlutterSecureStorage _storage = FlutterSecureStorage();
 
   Future<List<dynamic>> getTasks(int listId) async {
-    var token = await _storage.read(key: 'token');
+    String? token = await getToken();
     var response = await http.get(
       Uri.parse('$baseUrl/lists/$listId/tasks'),
       headers: {
@@ -24,7 +25,7 @@ class TaskService {
   }
 
   Future<dynamic> createTask(int listId, Map<String, dynamic> taskData) async {
-    var token = await _storage.read(key: 'token');
+    String? token = await getToken();
     var response = await http.post(
       Uri.parse('$baseUrl/lists/$listId/tasks'),
       headers: {
@@ -42,7 +43,7 @@ class TaskService {
   }
 
   Future<dynamic> getTask(int listId, int taskId) async {
-    var token = await _storage.read(key: 'token');
+    String? token = await getToken();
     var response = await http
         .get(Uri.parse('$baseUrl/lists/$listId/tasks/$taskId'), headers: {
       'Content-Type': 'application/json',
@@ -57,7 +58,7 @@ class TaskService {
 
   Future<dynamic> updateTask(
       int listId, int taskId, Map<String, dynamic> taskData) async {
-    var token = await _storage.read(key: 'token');
+    String? token = await getToken();
     var response = await http.patch(
       Uri.parse('$baseUrl/lists/$listId/tasks/$taskId'),
       headers: {
@@ -74,7 +75,7 @@ class TaskService {
   }
 
   Future<void> deleteTask(int listId, int taskId) async {
-    var token = await _storage.read(key: 'token');
+    String? token = await getToken();
     var response = await http
         .delete(Uri.parse('$baseUrl/lists/$listId/tasks/$taskId'), headers: {
       'Content-Type': 'application/json',
@@ -86,7 +87,7 @@ class TaskService {
   }
 
   Future<dynamic> toggleTask(int listId, int taskId) async {
-    var token = await _storage.read(key: 'token');
+    String? token = await getToken();
 
     var response = await http.patch(
         Uri.parse('$baseUrl/lists/$listId/tasks/$taskId/toggle'),

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:todo_list_mobile/screens/LoginPage.dart';
+import 'package:todo_list_mobile/services/UserService.dart';
 import 'package:todo_list_mobile/widgets/AddListWidget.dart';
 import 'package:todo_list_mobile/widgets/EditListWidget.dart';
 import 'package:todo_list_mobile/widgets/ListWidget.dart';
@@ -18,7 +20,13 @@ class _ListPageState extends State<ListsPage> {
   @override
   void initState() {
     super.initState();
-    listsFuture = ListService().getLists();
+    try {
+      listsFuture = ListService().getLists();
+    } catch (e) {
+      print('Error getting lists: $e');
+      Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => LoginPage()));
+    }
   }
 
   void _showAddListDialog() {
@@ -71,6 +79,19 @@ class _ListPageState extends State<ListsPage> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text('Lists'),
+        actions: <Widget>[
+          // Add this line
+          IconButton(
+            icon: Icon(Icons.exit_to_app),
+            onPressed: () {
+              UserService().signOut();
+              Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => LoginPage()));
+              print('Sign out');
+            },
+            tooltip: 'Sign Out',
+          ),
+        ],
       ),
       body: FutureBuilder<List<dynamic>>(
         future: listsFuture,
