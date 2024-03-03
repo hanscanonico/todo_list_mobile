@@ -10,7 +10,8 @@ class TasksPage extends StatefulWidget {
   final int listId;
   final String listName;
 
-  const TasksPage({super.key, required this.listId, required this.listName});
+  const TasksPage({Key? key, required this.listId, required this.listName})
+      : super(key: key);
 
   @override
   _TasksPageState createState() => _TasksPageState();
@@ -23,12 +24,11 @@ class _TasksPageState extends State<TasksPage> {
   @override
   void initState() {
     super.initState();
-    tasksFuture = TaskService().getTasks(widget.listId).catchError((error) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => LoginPage()));
-      });
-    });
+    tasksFuture = _loadTasks();
+  }
+
+  Future<List<dynamic>> _loadTasks() {
+    return TaskService().getTasks(widget.listId);
   }
 
   void _showAddTaskDialog() {
@@ -42,7 +42,7 @@ class _TasksPageState extends State<TasksPage> {
               await TaskService()
                   .createTask(widget.listId, {'name': taskName, 'done': false});
               setState(() {
-                tasksFuture = TaskService().getTasks(widget.listId);
+                tasksFuture = _loadTasks();
               });
               Navigator.of(context).pop();
             } catch (e) {
@@ -65,11 +65,11 @@ class _TasksPageState extends State<TasksPage> {
               await TaskService()
                   .updateTask(widget.listId, task['id'], {'name': newTaskName});
               setState(() {
-                tasksFuture = TaskService().getTasks(widget.listId);
+                tasksFuture = _loadTasks();
               });
               Navigator.of(context).pop();
             } catch (e) {
-              print('Error updating list: $e');
+              print('Error updating task: $e');
             }
           },
         );
@@ -84,14 +84,12 @@ class _TasksPageState extends State<TasksPage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text('Tasks for ${widget.listName}'),
         actions: <Widget>[
-          // Add this line
           IconButton(
             icon: Icon(Icons.exit_to_app),
             onPressed: () {
               UserService().signOut();
               Navigator.of(context).pushReplacement(
                   MaterialPageRoute(builder: (context) => LoginPage()));
-              print('Sign out');
             },
             tooltip: 'Sign Out',
           ),
@@ -107,46 +105,65 @@ class _TasksPageState extends State<TasksPage> {
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return Center(child: Text('No tasks found'));
           } else {
-            return ListView.builder(
-              itemCount: snapshot.data!.length,
-              itemBuilder: (context, index) {
-                var task = snapshot.data![index];
-                return Dismissible(
-                  key: Key(task['id'].toString()),
-                  background: Container(
-                    color: Colors.blue,
-                    alignment: Alignment.centerLeft,
-                    padding: EdgeInsets.only(left: 20.0),
-                    child: Icon(Icons.edit, color: Colors.white),
-                  ),
-                  secondaryBackground: Container(
-                    color: Colors.red,
-                    alignment: Alignment.centerRight,
-                    padding: EdgeInsets.only(right: 20.0),
-                    child: Icon(Icons.delete, color: Colors.white),
-                  ),
-                  direction: DismissDirection.horizontal,
-                  confirmDismiss: (direction) async {
-                    if (direction == DismissDirection.endToStart) {
-                      // Delete the task
-                      await TaskService().deleteTask(widget.listId, task['id']);
+            return ReorderableListView(
+              onReorder: (int oldIndex, int newIndex) async {
+                if (newIndex > oldIndex) {
+                  newIndex -= 1;
+                }
+                final currentItem = snapshot.data![oldIndex];
 
-                      // Refresh the list of tasks
-                      setState(() {
-                        tasksFuture = TaskService().getTasks(widget.listId);
-                      });
-                      return true; // Dismiss the item
-                    } else {
-                      _showEditTaskDialog(task);
-                    }
-                  },
-                  child: TaskWidget(
-                      taskName: task['name'],
-                      isDone: task['done'],
-                      taskId: task['id'],
-                      listId: widget.listId),
-                );
+                final oldItemId = currentItem['id'];
+                final newItemId = snapshot.data![newIndex]['id'];
+
+                print(
+                    'Moving item with ID $oldItemId from index $oldIndex to index $newIndex where item with ID $newItemId currently resides.');
+
+                setState(() {
+                  snapshot.data!.removeAt(oldIndex);
+                  snapshot.data!.insert(newIndex, currentItem);
+                });
+
+                try {
+                  await TaskService()
+                      .switchOrder(widget.listId, oldItemId, newItemId);
+                } catch (error) {
+                  print('Error updating list order: $error');
+                }
               },
+              children: snapshot.data!
+                  .map((task) => Dismissible(
+                        key: Key('task-${task['id']}'),
+                        background: Container(
+                          color: Colors.blue,
+                          alignment: Alignment.centerLeft,
+                          padding: EdgeInsets.only(left: 20.0),
+                          child: Icon(Icons.edit, color: Colors.white),
+                        ),
+                        secondaryBackground: Container(
+                          color: Colors.red,
+                          alignment: Alignment.centerRight,
+                          padding: EdgeInsets.only(right: 20.0),
+                          child: Icon(Icons.delete, color: Colors.white),
+                        ),
+                        onDismissed: (direction) async {
+                          if (direction == DismissDirection.endToStart) {
+                            await TaskService()
+                                .deleteTask(widget.listId, task['id']);
+                            setState(() {
+                              tasksFuture = _loadTasks();
+                            });
+                          } else {
+                            _showEditTaskDialog(task);
+                          }
+                        },
+                        child: TaskWidget(
+                            key: ValueKey('task-widget-${task['id']}'),
+                            taskName: task['name'],
+                            isDone: task['done'],
+                            taskId: task['id'],
+                            listId: widget.listId),
+                      ))
+                  .toList(),
             );
           }
         },

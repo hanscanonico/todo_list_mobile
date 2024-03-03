@@ -69,4 +69,12 @@ class TaskService {
           headers: _getHeaders(await getToken()),
         ));
   }
+
+  Future<void> switchOrder(int listId, int taskId, int id2) async {
+    await _handleRequest(() async => http.patch(
+          Uri.parse('$baseUrl/lists/$listId/tasks/$taskId/switch_order'),
+          body: json.encode({'id2': id2}),
+          headers: _getHeaders(await getToken()),
+        ));
+  }
 }

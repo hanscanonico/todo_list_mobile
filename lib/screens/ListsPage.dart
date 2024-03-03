@@ -79,14 +79,12 @@ class _ListPageState extends State<ListsPage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text('Lists'),
         actions: <Widget>[
-          // Add this line
           IconButton(
             icon: Icon(Icons.exit_to_app),
             onPressed: () {
               UserService().signOut();
               Navigator.of(context).pushReplacement(
                   MaterialPageRoute(builder: (context) => LoginPage()));
-              print('Sign out');
             },
             tooltip: 'Sign Out',
           ),
@@ -102,39 +100,63 @@ class _ListPageState extends State<ListsPage> {
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(child: Text('No lists found'));
           } else {
-            return ListView.builder(
-              itemCount: snapshot.data!.length,
-              itemBuilder: (context, index) {
-                var list = snapshot.data![index];
-                return Dismissible(
-                    key: Key(list['id'].toString()),
-                    background: Container(
-                      color: Colors.blue,
-                      alignment: Alignment.centerLeft,
-                      padding: EdgeInsets.only(left: 20.0),
-                      child: Icon(Icons.edit, color: Colors.white),
-                    ),
-                    secondaryBackground: Container(
-                      color: Colors.red,
-                      alignment: Alignment.centerRight,
-                      padding: EdgeInsets.only(right: 20.0),
-                      child: Icon(Icons.delete, color: Colors.white),
-                    ),
-                    direction: DismissDirection.horizontal,
-                    confirmDismiss: (direction) async {
-                      if (direction == DismissDirection.endToStart) {
-                        await ListService().deleteList(list['id']);
-                        setState(() {
-                          listsFuture = ListService().getLists();
-                        });
-                        return true;
-                      } else {
-                        _showEditListDialog(list);
-                      }
-                    },
-                    child:
-                        ListWidget(listName: list['name'], listId: list['id']));
+            return ReorderableListView(
+              onReorder: (int oldIndex, int newIndex) async {
+                if (newIndex > oldIndex) {
+                  newIndex -= 1;
+                }
+                final currentItem = snapshot.data![oldIndex];
+
+                final oldItemId = currentItem['id'];
+                final newItemId = snapshot.data![newIndex]['id'];
+
+                print(
+                    'Moving item with ID $oldItemId from index $oldIndex to index $newIndex where item with ID $newItemId currently resides.');
+
+                setState(() {
+                  snapshot.data!.removeAt(oldIndex);
+                  snapshot.data!.insert(newIndex, currentItem);
+                });
+
+                try {
+                  await ListService().switchOrder(oldItemId, newItemId);
+                } catch (error) {
+                  print('Error updating list order: $error');
+                }
               },
+              children: snapshot.data!
+                  .asMap()
+                  .map((index, item) => MapEntry(
+                      index,
+                      Dismissible(
+                        key: Key(item['id'].toString()),
+                        background: Container(
+                          color: Colors.blue,
+                          alignment: Alignment.centerLeft,
+                          padding: EdgeInsets.only(left: 20.0),
+                          child: Icon(Icons.edit, color: Colors.white),
+                        ),
+                        secondaryBackground: Container(
+                          color: Colors.red,
+                          alignment: Alignment.centerRight,
+                          padding: EdgeInsets.only(right: 20.0),
+                          child: Icon(Icons.delete, color: Colors.white),
+                        ),
+                        onDismissed: (direction) async {
+                          if (direction == DismissDirection.endToStart) {
+                            await ListService().deleteList(item['id']);
+                            setState(() {
+                              listsFuture = ListService().getLists();
+                            });
+                          } else {
+                            _showEditListDialog(item);
+                          }
+                        },
+                        child: ListWidget(
+                            listName: item['name'], listId: item['id']),
+                      )))
+                  .values
+                  .toList(),
             );
           }
         },

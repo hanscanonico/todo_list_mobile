@@ -61,4 +61,12 @@ class ListService {
           headers: _getHeaders(await getToken()),
         ));
   }
+
+  Future<void> switchOrder(int listId, id2) async {
+    await _handleRequest(() async => http.patch(
+          Uri.parse('$baseUrl/lists/$listId/switch_order'),
+          body: json.encode({'id2': id2}),
+          headers: _getHeaders(await getToken()),
+        ));
+  }
 }
