@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:todo_list_mobile/functions.dart';
 import 'package:todo_list_mobile/screens/ListsPage.dart';
 import 'package:todo_list_mobile/screens/LoginPage.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 void main() {
   runApp(MyApp());
@@ -14,7 +13,6 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  final FlutterSecureStorage _storage = FlutterSecureStorage();
   Widget _defaultHome = LoginPage(); // Default to login page
 
   @override

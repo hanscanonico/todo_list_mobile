@@ -3,89 +3,62 @@ import 'package:http/http.dart' as http;
 import 'package:todo_list_mobile/functions.dart';
 
 class ListService {
-  // 'https://task-tracker-api.fly.dev'
   final String baseUrl = 'https://task-tracker-api.fly.dev';
 
-  Future<List<dynamic>> getLists() async {
-    String? token = await getToken();
-    var response = await http.get(
-      Uri.parse('$baseUrl/lists'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
+  Future<dynamic> _handleRequest(
+      Future<http.Response> Function() requestFunction) async {
+    var response = await requestFunction();
 
-    if (response.statusCode == 200) {
+    if (response.statusCode == 200 || response.statusCode == 201) {
       return json.decode(response.body);
     } else {
-      throw Exception('Failed to load lists');
+      print(response.body);
+      throw Exception('Failed to process request');
     }
+  }
+
+  Map<String, String> _getHeaders(String? token) {
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
+  }
+
+  Future<List<dynamic>> getLists() async {
+    var response = await _handleRequest(() async => http.get(
+          Uri.parse('$baseUrl/lists'),
+          headers: _getHeaders(await getToken()),
+        ));
+    return List<dynamic>.from(response);
   }
 
   Future<dynamic> createList(Map<String, dynamic> listData) async {
-    String? token = await getToken();
-    var response = await http.post(
-      Uri.parse('$baseUrl/lists'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: json.encode(listData),
-    );
-    if (response.statusCode == 201) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Failed to create list');
-    }
+    return _handleRequest(() async => http.post(
+          Uri.parse('$baseUrl/lists'),
+          headers: _getHeaders(await getToken()),
+          body: json.encode(listData),
+        ));
   }
 
   Future<dynamic> getList(int listId) async {
-    String? token = await getToken();
-    var response = await http.get(
-      Uri.parse('$baseUrl/lists/$listId'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
-    print('response: ${response.body}');
-    print('token: $token');
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Failed to load list');
-    }
+    return _handleRequest(() async => http.get(
+          Uri.parse('$baseUrl/lists/$listId'),
+          headers: _getHeaders(await getToken()),
+        ));
   }
 
   Future<dynamic> updateList(int listId, Map<String, dynamic> listData) async {
-    String? token = await getToken();
-    var response = await http.patch(
-      Uri.parse('$baseUrl/lists/$listId'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: json.encode(listData),
-    );
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Failed to update list');
-    }
+    return _handleRequest(() async => http.patch(
+          Uri.parse('$baseUrl/lists/$listId'),
+          headers: _getHeaders(await getToken()),
+          body: json.encode(listData),
+        ));
   }
 
   Future<void> deleteList(int listId) async {
-    String? token = await getToken();
-    var response = await http.delete(
-      Uri.parse('$baseUrl/lists/$listId'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
-    if (response.statusCode != 200) {
-      throw Exception('Failed to delete list');
-    }
+    await _handleRequest(() async => http.delete(
+          Uri.parse('$baseUrl/lists/$listId'),
+          headers: _getHeaders(await getToken()),
+        ));
   }
 }

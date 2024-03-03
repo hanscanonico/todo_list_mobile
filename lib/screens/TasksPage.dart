@@ -23,7 +23,12 @@ class _TasksPageState extends State<TasksPage> {
   @override
   void initState() {
     super.initState();
-    tasksFuture = TaskService().getTasks(widget.listId);
+    tasksFuture = TaskService().getTasks(widget.listId).catchError((error) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => LoginPage()));
+      });
+    });
   }
 
   void _showAddTaskDialog() {

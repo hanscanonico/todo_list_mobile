@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:todo_list_mobile/functions.dart';
 import 'package:todo_list_mobile/screens/ListsPage.dart';
 import 'package:todo_list_mobile/services/UserService.dart';
@@ -14,7 +13,6 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final FlutterSecureStorage _storage = FlutterSecureStorage();
 
   @override
   Widget build(BuildContext context) {
@@ -30,31 +28,28 @@ class _LoginPageState extends State<LoginPage> {
             TextField(
               controller: _emailController,
               decoration: InputDecoration(
-                labelText: 'Identifier',
+                labelText: 'Email',
                 border: OutlineInputBorder(),
               ),
             ),
-            SizedBox(height: 20), // Adds space between the two TextFields
+            SizedBox(height: 20),
             TextField(
               controller: _passwordController,
-              obscureText: true, // Hides the password
+              obscureText: true,
               decoration: InputDecoration(
                 labelText: 'Password',
                 border: OutlineInputBorder(),
               ),
             ),
-            SizedBox(height: 20), // Adds space above the button
+            SizedBox(height: 20),
             ElevatedButton(
               onPressed: () async {
                 await UserService()
                     .signIn(_emailController.text, _passwordController.text);
-
-                if (getToken() != null) {
+                if (await getToken() != null) {
                   Navigator.of(context).pushReplacement(
                       MaterialPageRoute(builder: (context) => ListsPage()));
                 }
-                // Implement your login logic here
-
                 print(
                     'Identifier: ${_emailController.text}, Password: ${_passwordController.text}');
               },
@@ -68,8 +63,6 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   void dispose() {
-    // Clean up the controller when the widget is removed from the
-    // widget tree.
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();

@@ -20,13 +20,12 @@ class _ListPageState extends State<ListsPage> {
   @override
   void initState() {
     super.initState();
-    try {
-      listsFuture = ListService().getLists();
-    } catch (e) {
-      print('Error getting lists: $e');
-      Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => LoginPage()));
-    }
+    listsFuture = ListService().getLists().catchError((error) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => LoginPage()));
+      });
+    });
   }
 
   void _showAddListDialog() {
@@ -124,14 +123,11 @@ class _ListPageState extends State<ListsPage> {
                     direction: DismissDirection.horizontal,
                     confirmDismiss: (direction) async {
                       if (direction == DismissDirection.endToStart) {
-                        // Delete the task
                         await ListService().deleteList(list['id']);
-
-                        // Refresh the list of tasks
                         setState(() {
                           listsFuture = ListService().getLists();
                         });
-                        return true; // Dismiss the item
+                        return true;
                       } else {
                         _showEditListDialog(list);
                       }
